@@ -1,24 +1,40 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Photo Moments</title>
+    <link rel="icon" type="image/png" href="./watermark/logo.png" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      /* Custom Scrollbar for dark theme */
-      ::-webkit-scrollbar {
-        width: 8px;
+      :root {
+        --safe-area-inset-bottom: env(safe-area-inset-bottom);
       }
-      ::-webkit-scrollbar-track {
-        background: #000;
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: #000; }
+      ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #555; }
+      
+      @keyframes progress-fast {
+        0% { left: -100%; }
+        100% { left: 100%; }
       }
-      ::-webkit-scrollbar-thumb {
-        background: #333;
-        border-radius: 4px;
+      .animate-progress-fast {
+        position: absolute;
+        width: 100%;
+        animation: progress-fast 1s linear infinite;
       }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #555;
+
+      @keyframes fade-in {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
+      
+      @media print {
+        .no-print { display: none !important; }
+        body { background: white !important; }
       }
     </style>
   <script type="importmap">
@@ -28,7 +44,12 @@
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
     "react/": "https://aistudiocdn.com/react@^19.2.1/",
     "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
-    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.10.1"
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.10.1",
+    "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@^2.86.2",
+    "html5-qrcode": "https://aistudiocdn.com/html5-qrcode@^2.3.8",
+    "qrcode.react": "https://esm.sh/qrcode.react@^4.2.0",
+    "pdfjs-dist": "https://esm.sh/pdfjs-dist@3.11.174",
+    "jszip": "https://esm.sh/jszip@3.10.1"
   }
 }
 </script>

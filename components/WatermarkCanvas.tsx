@@ -2,13 +2,17 @@ import React, { useRef, useEffect, useState } from "react";
 
 interface WatermarkCanvasProps {
   imageUrl: string;
-  watermarkUrl?: string; // default nằm trong folder /watermark
+  watermarkType?: 'image' | 'text';
+  watermarkText?: string;
+  watermarkUrl?: string; // fallback if image type is selected
   className?: string;
 }
 
 const WatermarkCanvas: React.FC<WatermarkCanvasProps> = ({
   imageUrl,
-  watermarkUrl = "./watermark/watermark.png", // <-- Sửa đúng thư mục chung folder
+  watermarkType = 'image',
+  watermarkText = 'Photo Moments',
+  watermarkUrl = "./watermark/watermark.png",
   className = "",
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -45,14 +49,19 @@ const WatermarkCanvas: React.FC<WatermarkCanvasProps> = ({
 
     const wmImg = new Image();
     wmImg.crossOrigin = "anonymous";
-    wmImg.src = watermarkUrl;
+    // Only load watermark image if type is image
+    if (watermarkType === 'image') {
+      wmImg.src = watermarkUrl;
+    }
 
     Promise.all([
       new Promise((resolve) => (mainImg.onload = resolve)),
-      new Promise((resolve) => {
-        wmImg.onload = resolve;
-        wmImg.onerror = () => resolve(null); // nếu thiếu watermark → không lỗi
-      }),
+      watermarkType === 'image' 
+        ? new Promise((resolve) => {
+            wmImg.onload = resolve;
+            wmImg.onerror = () => resolve(null); // nếu thiếu watermark → không lỗi
+          })
+        : Promise.resolve()
     ]).then(() => {
       /** Scale ảnh chính theo container */
       const scale = Math.min(
@@ -69,8 +78,8 @@ const WatermarkCanvas: React.FC<WatermarkCanvasProps> = ({
       /** Vẽ ảnh chính */
       ctx.drawImage(mainImg, 0, 0, drawWidth, drawHeight);
 
-      /** Vẽ watermark nếu có */
-      if (wmImg.width > 0) {
+      /** Vẽ watermark */
+      if (watermarkType === 'image' && wmImg.width > 0) {
         ctx.save();
         ctx.globalAlpha = 0.45;
 
@@ -84,18 +93,30 @@ const WatermarkCanvas: React.FC<WatermarkCanvasProps> = ({
         ctx.drawImage(wmImg, x, y, wmW, wmH);
         ctx.restore();
       } else {
-        /** fallback nếu không tìm thấy watermark */
+        /** Vẽ Text Watermark */
         ctx.save();
-        ctx.globalAlpha = 0.25;
+        ctx.globalAlpha = 0.35;
         ctx.fillStyle = "white";
-        ctx.font = `bold ${drawWidth * 0.08}px Arial`;
+        
+        // Dynamic font size based on image width
+        const fontSize = drawWidth * 0.1; 
+        ctx.font = `bold ${fontSize}px Arial`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("Photo moments", drawWidth / 2, drawHeight / 2);
+        
+        // Add shadow for better visibility
+        ctx.shadowColor = "rgba(0,0,0,0.5)";
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+
+        // Draw multiple times diagonally if needed, or just center?
+        // Let's stick to center for consistency with image mode
+        ctx.fillText(watermarkText, drawWidth / 2, drawHeight / 2);
         ctx.restore();
       }
     });
-  }, [imageUrl, watermarkUrl, size]);
+  }, [imageUrl, watermarkUrl, watermarkType, watermarkText, size]);
 
   return (
     <div

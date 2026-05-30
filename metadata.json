@@ -1,5 +1,7 @@
 {
   "name": "Photo Moments",
   "description": "A professional photography delivery platform with watermarking, payment integration, and admin management.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera"
+  ]
 }
