@@ -8,13 +8,13 @@ import { Link } from 'react-router-dom';
 
 // --- CẤU HÌNH KẾT NỐI WEB APP THỰC THI ---
 // Phải khớp với SERVICE_ENTRY_API_KEY trong id-photo-booth-pro/services/photoMomentsBridge.ts.
-// Lấy từ biến môi trường (REACT_APP_SERVICE_ENTRY_API_KEY, set lúc build) thay vì hardcode
-// thẳng trong source: đây là mã public (sẽ nằm trong bundle JS phía client dù có làm cách
-// nào), chỉ dùng để id-photo-booth-pro xác minh request tới từ Cart.tsx — KHÔNG được dùng
-// giá trị trùng với GEMINI_API_KEY thật, nếu không Google sẽ tự thu hồi key khi quét thấy
-// nó bị lộ công khai trong repo (đây là nguyên nhân lỗi "API key not valid" hiện tại).
+// Đây là 1 chuỗi ngẫu nhiên (KHÔNG phải Google API key thật) chỉ dùng để id-photo-booth-pro
+// xác minh request tới từ Cart.tsx. Hardcode trực tiếp vì AI Studio Secrets không bơm biến
+// REACT_APP_*/VITE_* vào bước build của CRA/Vite (chỉ dùng được cho biến đọc lúc runtime như
+// GEMINI_API_KEY) — dùng process.env ở đây sẽ luôn ra chuỗi rỗng trên bản deploy thật.
+// An toàn để hardcode vì đây không phải credential thật nên Google sẽ không tự thu hồi.
 const EXECUTION_APP_URL = PHOTO_BOOTH_PRO_URL;
-const EXECUTION_API_KEY = process.env.REACT_APP_SERVICE_ENTRY_API_KEY || "";
+const EXECUTION_API_KEY = "428fb24038f3c73503f7342332431fdab5cbb94dcaefeabf";
 
 const Cart: React.FC = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
