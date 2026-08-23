@@ -7,9 +7,14 @@ import { PHOTO_BOOTH_PRO_URL } from '../utils/constants';
 import { Link } from 'react-router-dom';
 
 // --- CẤU HÌNH KẾT NỐI WEB APP THỰC THI ---
-// Phải khớp với SERVICE_ENTRY_API_KEY trong id-photo-booth-pro/services/photoMomentsBridge.ts
+// Phải khớp với SERVICE_ENTRY_API_KEY trong id-photo-booth-pro/services/photoMomentsBridge.ts.
+// Lấy từ biến môi trường (REACT_APP_SERVICE_ENTRY_API_KEY, set lúc build) thay vì hardcode
+// thẳng trong source: đây là mã public (sẽ nằm trong bundle JS phía client dù có làm cách
+// nào), chỉ dùng để id-photo-booth-pro xác minh request tới từ Cart.tsx — KHÔNG được dùng
+// giá trị trùng với GEMINI_API_KEY thật, nếu không Google sẽ tự thu hồi key khi quét thấy
+// nó bị lộ công khai trong repo (đây là nguyên nhân lỗi "API key not valid" hiện tại).
 const EXECUTION_APP_URL = PHOTO_BOOTH_PRO_URL;
-const EXECUTION_API_KEY = "AIzaSyBIaBWwAjgGdrkSDWN0I9leNXUQtjDtSSk";
+const EXECUTION_API_KEY = process.env.REACT_APP_SERVICE_ENTRY_API_KEY || "";
 
 const Cart: React.FC = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
