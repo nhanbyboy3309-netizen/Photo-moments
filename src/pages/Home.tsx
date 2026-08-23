@@ -4,7 +4,7 @@ import { Search, ArrowRight, MapPin, Loader2, Camera, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getSettings, getPhotoByStampCode, getPhotoById } from '../services/mockBackend';
 import { SiteSettings } from '../types';
-import { PHOTO_BOOTH_PRO_URL } from '../utils/constants';
+import { PHOTO_BOOTH_PRO_URL, MEMORIAL_PORTRAIT_URL } from '../utils/constants';
 import { getMemorialPortraitPhotoUrl } from '../services/memorialPortraitBridge';
 // @ts-ignore
 import { Html5Qrcode } from "html5-qrcode";
@@ -84,7 +84,7 @@ const Home: React.FC = () => {
                              const id = match ? match[1] : decodedText;
 
                              // Thử tìm trong DB của photo-moments trước; không có thì
-                             // tra bên Memorial Portrait (chỉ lấy link ảnh); cuối cùng
+                             // tra xem mã có tồn tại bên Memorial Portrait không; cuối cùng
                              // mới chuyển hướng sang ID Photo Booth Pro.
                              const photo = await getPhotoById(id);
                              const memorialPhotoUrl = photo ? null : await getMemorialPortraitPhotoUrl(id);
@@ -95,7 +95,7 @@ const Home: React.FC = () => {
                              if (photo) {
                                  navigate(`/view/${id}`);
                              } else if (memorialPhotoUrl) {
-                                 window.open(memorialPhotoUrl, '_blank');
+                                 window.location.href = `${MEMORIAL_PORTRAIT_URL}/?photoId=${encodeURIComponent(id)}`;
                              } else {
                                  window.location.href = `${PHOTO_BOOTH_PRO_URL}/?photoId=${encodeURIComponent(id)}`;
                              }
@@ -120,7 +120,7 @@ const Home: React.FC = () => {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchId.trim()) return;
-    
+
     setLoading(true);
     let targetId = searchId.trim();
 
@@ -154,12 +154,12 @@ const Home: React.FC = () => {
         return;
     }
 
-    // 2. Không có thì tra bên database "Memorial Portrait" — chỉ lấy link ảnh,
-    // không chuyển hướng sang app đó.
+    // 2. Không có thì tra xem mã có tồn tại bên database "Memorial Portrait" không;
+    // nếu có thì chuyển hướng sang app đó (tương tự ID Photo Booth Pro).
     const memorialPhotoUrl = await getMemorialPortraitPhotoUrl(targetId);
     if (memorialPhotoUrl) {
         setLoading(false);
-        window.open(memorialPhotoUrl, '_blank');
+        window.location.href = `${MEMORIAL_PORTRAIT_URL}/?photoId=${encodeURIComponent(targetId)}`;
         return;
     }
 
