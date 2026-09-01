@@ -8,7 +8,8 @@ import { createOrder, confirmOrderPayment, getOrderById } from '../services/mock
 interface PrintIdCardModuleProps {
   price: number;
   printerName: string;
-  logoUrl?: string; 
+  logoUrl?: string;
+  printMode?: 'dialog' | 'silent';
 }
 
 const ID_CARD_WIDTH_MM = 85.6;
@@ -17,7 +18,7 @@ const ID_RATIO = ID_CARD_WIDTH_MM / ID_CARD_HEIGHT_MM;
 
 type Step = 'upload' | 'crop' | 'payment' | 'print';
 
-const PrintIdCardModule: React.FC<PrintIdCardModuleProps> = ({ price, printerName, logoUrl: initialLogoUrl }) => {
+const PrintIdCardModule: React.FC<PrintIdCardModuleProps> = ({ price, printerName, logoUrl: initialLogoUrl, printMode = 'dialog' }) => {
   const [sessionId, setSessionId] = useState('');
   const [step, setStep] = useState<Step>('upload');
   
@@ -99,9 +100,38 @@ const PrintIdCardModule: React.FC<PrintIdCardModuleProps> = ({ price, printerNam
     }
   };
 
-  const executePrint = () => {
+  const executePrintSilent = async () => {
       setPrintStatus('preparing');
-      
+      setPrintStatus('sending');
+      try {
+          const res = await fetch('/api/print-idcard', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  printerName,
+                  layout,
+                  copies,
+                  frontImageUrl: croppedFront,
+                  backImageUrl: croppedBack
+              })
+          });
+          const data = await res.json();
+          if (!data.success) throw new Error(data.message || 'In thất bại.');
+          setPrintStatus('completed');
+      } catch (e: any) {
+          alert(`Lỗi in thẳng qua Server: ${e.message}\n\nHãy đổi sang chế độ "Hộp thoại trình duyệt" trong Admin > Cấu hình > Máy in nếu lỗi này lặp lại.`);
+          setPrintStatus('idle');
+      }
+  };
+
+  const executePrint = () => {
+      if (printMode === 'silent') {
+          executePrintSilent();
+          return;
+      }
+
+      setPrintStatus('preparing');
+
       const cardStyle = `width: ${ID_CARD_WIDTH_MM}mm; height: ${ID_CARD_HEIGHT_MM}mm; object-fit: cover; border: 0.1mm solid #eee;`;
       let pageCss = layout === 'A4_1Side' ? '@page { size: A4 portrait; margin: 0; }' : '@page { size: A5 landscape; margin: 0; }';
       
@@ -231,8 +261,18 @@ const PrintIdCardModule: React.FC<PrintIdCardModuleProps> = ({ price, printerNam
                           )}
                       </div>
 
+                      <div className="pt-4 border-t border-zinc-800 space-y-2">
+                          <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Số lượng bản in</label>
+                          <div className="flex items-center gap-4 bg-black rounded-xl p-2 border border-zinc-800 w-fit">
+                              <button onClick={() => setCopies(Math.max(1, copies - 1))} className="p-2 hover:bg-zinc-800 rounded-lg text-white"><Minus className="w-4 h-4"/></button>
+                              <span className="text-xl font-black text-white w-8 text-center">{copies}</span>
+                              <button onClick={() => setCopies(copies + 1)} className="p-2 hover:bg-zinc-800 rounded-lg text-white"><Plus className="w-4 h-4"/></button>
+                          </div>
+                          <p className="text-zinc-400 text-xs">Thành tiền: <span className="font-bold text-white">{formatCurrency(price * copies)}</span></p>
+                      </div>
+
                       <div className="pt-4 border-t border-zinc-800">
-                          <button 
+                          <button
                             disabled={!frontImage || !backImage}
                             onClick={() => { setStep('crop'); setCropSrc(frontImage); setCroppingSide('front'); }}
                             className="w-full bg-white disabled:opacity-20 text-black py-4 rounded-2xl font-black uppercase text-sm tracking-widest hover:bg-zinc-200 transition-colors shadow-lg flex items-center justify-center gap-2"
@@ -346,11 +386,9 @@ const PrintIdCardModule: React.FC<PrintIdCardModuleProps> = ({ price, printerNam
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-xs text-zinc-500 font-bold uppercase">Số lượng bản in</label>
-                                <div className="flex items-center gap-4 bg-black rounded-xl p-2 border border-zinc-800 w-fit">
-                                    <button onClick={() => setCopies(Math.max(1, copies - 1))} className="p-2 hover:bg-zinc-800 rounded-lg text-white"><Minus className="w-4 h-4"/></button>
-                                    <span className="text-xl font-black text-white w-8 text-center">{copies}</span>
-                                    <button onClick={() => setCopies(copies + 1)} className="p-2 hover:bg-zinc-800 rounded-lg text-white"><Plus className="w-4 h-4"/></button>
+                                <label className="text-xs text-zinc-500 font-bold uppercase">Số lượng bản in (đã thanh toán)</label>
+                                <div className="flex items-center gap-4 bg-black rounded-xl p-2 border border-zinc-800 w-fit opacity-80">
+                                    <span className="text-xl font-black text-white w-8 text-center px-2">{copies}</span>
                                 </div>
                             </div>
                         </div>
@@ -360,8 +398,11 @@ const PrintIdCardModule: React.FC<PrintIdCardModuleProps> = ({ price, printerNam
                         <div className="space-y-1">
                             <p className="text-zinc-500 text-xs font-bold uppercase">Máy in đích</p>
                             <p className="text-xl font-bold text-white">{printerName}</p>
+                            <span className={`inline-block mt-1 text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded ${printMode === 'silent' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-zinc-800 text-zinc-400 border border-zinc-700'}`}>
+                                {printMode === 'silent' ? 'In thẳng qua Server' : 'Hộp thoại trình duyệt'}
+                            </span>
                         </div>
-                        <button 
+                        <button
                             onClick={executePrint}
                             className="w-full bg-white text-black py-4 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-zinc-200 transition-transform active:scale-95 shadow-xl flex items-center justify-center gap-3"
                         >
