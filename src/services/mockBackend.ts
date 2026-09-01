@@ -52,7 +52,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   printPriceA4: 1000,
   printPriceA3: 3000,
   printPriceIdCard: 2000,
-  idCardPrintMode: 'dialog',
+  printMode: 'dialog',
   navigationItems: DEFAULT_NAV
 };
 

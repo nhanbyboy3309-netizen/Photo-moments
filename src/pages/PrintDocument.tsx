@@ -107,8 +107,34 @@ const PrintDocument: React.FC = () => {
   const handlePrintAction = async () => {
       setPrintStatus('rendering');
       setPrintProgress(15);
-      
+
       try {
+          if (settings?.printMode === 'silent') {
+              const payloadFiles = [];
+              for (const file of files) {
+                  const { pageRangeStart, pageRangeEnd, copies, pagesPerSheet, paperSize } = file.config;
+                  const images = file.name.toLowerCase().endsWith('.pdf')
+                    ? await renderPdfToImages(file.url, pageRangeStart, pageRangeEnd)
+                    : [file.url];
+                  payloadFiles.push({ paperSize, pagesPerSheet, copies, images });
+              }
+
+              setPrintProgress(70);
+              setPrintStatus('sending');
+
+              const res = await fetch('/api/print-document', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ printerName: settings?.defaultPrinterName || 'Máy in mặc định', files: payloadFiles })
+              });
+              const data = await res.json();
+              if (!data.success) throw new Error(data.message || 'In thất bại.');
+
+              setPrintProgress(100);
+              setPrintStatus('completed');
+              return;
+          }
+
           let iframe = document.getElementById('print-engine-core') as HTMLIFrameElement;
           if (!iframe) {
               iframe = document.createElement('iframe');
@@ -181,9 +207,13 @@ const PrintDocument: React.FC = () => {
                   setPrintStatus('completed');
               }, 500);
           }
-      } catch (err) {
+      } catch (err: any) {
           console.error(err);
-          alert("Lỗi engine in. Vui lòng thử lại.");
+          if (settings?.printMode === 'silent') {
+              alert(`Lỗi in thẳng qua Server: ${err.message || 'Không rõ nguyên nhân.'}\n\nHãy đổi sang chế độ "Hộp thoại trình duyệt" trong Admin > Cấu hình > Máy in nếu lỗi này lặp lại.`);
+          } else {
+              alert("Lỗi engine in. Vui lòng thử lại.");
+          }
           setPrintStatus('idle');
       }
   };
@@ -287,7 +317,7 @@ const PrintDocument: React.FC = () => {
             price={settings?.printPriceIdCard || 2000}
             printerName={settings?.defaultPrinterName || 'Máy in mặc định'}
             logoUrl={settings?.logoImageUrl}
-            printMode={settings?.idCardPrintMode || 'dialog'}
+            printMode={settings?.printMode || 'dialog'}
           />
         ) : (
           <div className="grid lg:grid-cols-3 gap-8 animate-fade-in">
@@ -383,6 +413,9 @@ const PrintDocument: React.FC = () => {
                                       <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                                       <h4 className="text-xl font-bold text-green-500">Đã thanh toán</h4>
                                       <p className="text-zinc-400 text-xs mt-1">Máy in đã sẵn sàng nhận lệnh.</p>
+                                      <span className={`inline-block mt-3 text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded ${settings?.printMode === 'silent' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-zinc-800 text-zinc-400 border border-zinc-700'}`}>
+                                          {settings?.printMode === 'silent' ? 'In thẳng qua Server' : 'Hộp thoại trình duyệt'}
+                                      </span>
                                   </div>
                                   <button onClick={handlePrintAction} className="w-full bg-blue-600 text-white py-6 rounded-2xl font-black hover:bg-blue-500 shadow-xl shadow-blue-900/30 flex items-center justify-center gap-3 animate-bounce">
                                       <Printer className="w-6 h-6"/> KÍCH HOẠT TRẠM IN

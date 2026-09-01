@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Printer, Loader2, CreditCard, Play, CheckCircle2, Info, Monitor, Plus, MousePointerClick, Zap } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Printer, Loader2, CreditCard, Play, CheckCircle2, Info, Monitor, Plus, MousePointerClick, Zap, RefreshCw, ServerOff } from 'lucide-react';
 import { SiteSettings } from '../../../types';
 
 interface PrinterSettingsProps {
@@ -10,17 +10,37 @@ interface PrinterSettingsProps {
   saving: boolean;
 }
 
-const COMMON_PRINTERS = [
-    { id: 'canon_2900', name: 'Canon LBP 2900', brand: 'Canon', type: 'Laser B&W' },
-    { id: 'canon_g3010', name: 'Canon Pixma G3010', brand: 'Canon', type: 'Inkjet Color' },
-    { id: 'hp_laserjet', name: 'HP LaserJet Pro', brand: 'HP', type: 'Laser' },
-    { id: 'epson_l3110', name: 'Epson L3110', brand: 'Epson', type: 'Inkjet' },
-    { id: 'brother_2321', name: 'Brother HL-L2321D', brand: 'Brother', type: 'Laser Duplex' },
-    { id: 'ricoh_aficio', name: 'Ricoh Aficio', brand: 'Ricoh', type: 'Digital' }
-];
-
 const PrinterSettings: React.FC<PrinterSettingsProps> = ({ settings, updateSettings, onSave, saving }) => {
   const [testLoading, setTestLoading] = useState(false);
+
+  // Real printers installed on the machine running server.js — fetched from
+  // GET /api/printers (Windows only), not a guessed/hardcoded brand list.
+  const [detectedPrinters, setDetectedPrinters] = useState<string[]>([]);
+  const [loadingPrinters, setLoadingPrinters] = useState(true);
+  const [detectError, setDetectError] = useState<string | null>(null);
+
+  const fetchPrinters = useCallback(async () => {
+      setLoadingPrinters(true);
+      setDetectError(null);
+      try {
+          const res = await fetch('/api/printers');
+          const data = await res.json();
+          if (data.success && Array.isArray(data.printers)) {
+              setDetectedPrinters(data.printers);
+              if (data.printers.length === 0) setDetectError('Không có máy in nào được cài trên máy chủ.');
+          } else {
+              setDetectedPrinters([]);
+              setDetectError(data.message || 'Không lấy được danh sách máy in.');
+          }
+      } catch (e) {
+          setDetectedPrinters([]);
+          setDetectError('Không kết nối được tới server.js để lấy danh sách máy in.');
+      } finally {
+          setLoadingPrinters(false);
+      }
+  }, []);
+
+  useEffect(() => { fetchPrinters(); }, [fetchPrinters]);
 
   const handleTestPrint = () => {
     setTestLoading(true);
@@ -88,6 +108,14 @@ const PrinterSettings: React.FC<PrinterSettingsProps> = ({ settings, updateSetti
                     <p className="text-zinc-400 text-sm">Cấu hình máy in đã cài đặt trên máy tính hiện tại.</p>
                 </div>
             </div>
+            <button
+                onClick={fetchPrinters}
+                disabled={loadingPrinters}
+                className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 disabled:opacity-50"
+            >
+                {loadingPrinters ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                Đồng bộ máy in
+            </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -95,38 +123,45 @@ const PrinterSettings: React.FC<PrinterSettingsProps> = ({ settings, updateSetti
             <div className="lg:col-span-2 space-y-6">
                 <div className="space-y-4">
                     <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-                        <Monitor className="w-4 h-4"/> Danh sách thiết bị sẵn có
+                        <Monitor className="w-4 h-4"/> Máy in phát hiện trên máy chủ
                     </h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {COMMON_PRINTERS.map((p) => (
-                            <button
-                                key={p.id}
-                                onClick={() => updateSettings({ defaultPrinterName: p.name })}
-                                className={`p-4 rounded-2xl border text-left transition-all relative group overflow-hidden ${
-                                    settings.defaultPrinterName === p.name 
-                                    ? 'bg-blue-600/10 border-blue-500 shadow-lg shadow-blue-900/10' 
-                                    : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'
-                                }`}
-                            >
-                                <div className="flex items-start justify-between relative z-10">
-                                    <div>
-                                        <p className="text-[10px] font-black text-blue-400 uppercase mb-1">{p.brand}</p>
-                                        <h4 className={`font-bold text-base ${settings.defaultPrinterName === p.name ? 'text-white' : 'text-zinc-300'}`}>{p.name}</h4>
-                                        <p className="text-zinc-500 text-xs mt-1">{p.type}</p>
+
+                    {loadingPrinters ? (
+                        <div className="flex items-center gap-2 text-zinc-500 text-sm p-6 justify-center bg-black/40 rounded-2xl border border-zinc-800">
+                            <Loader2 className="w-4 h-4 animate-spin"/> Đang dò máy in đã cài trên máy chủ...
+                        </div>
+                    ) : detectedPrinters.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {detectedPrinters.map((name) => (
+                                <button
+                                    key={name}
+                                    onClick={() => updateSettings({ defaultPrinterName: name })}
+                                    className={`p-4 rounded-2xl border text-left transition-all relative group overflow-hidden ${
+                                        settings.defaultPrinterName === name
+                                        ? 'bg-blue-600/10 border-blue-500 shadow-lg shadow-blue-900/10'
+                                        : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'
+                                    }`}
+                                >
+                                    <div className="flex items-start justify-between relative z-10">
+                                        <h4 className={`font-bold text-base ${settings.defaultPrinterName === name ? 'text-white' : 'text-zinc-300'}`}>{name}</h4>
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${settings.defaultPrinterName === name ? 'bg-blue-500 text-white' : 'bg-zinc-800 text-zinc-600'}`}>
+                                            {settings.defaultPrinterName === name ? <CheckCircle2 className="w-5 h-5"/> : <Printer className="w-4 h-4"/>}
+                                        </div>
                                     </div>
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${settings.defaultPrinterName === p.name ? 'bg-blue-500 text-white' : 'bg-zinc-800 text-zinc-600'}`}>
-                                        {settings.defaultPrinterName === p.name ? <CheckCircle2 className="w-5 h-5"/> : <Printer className="w-4 h-4"/>}
-                                    </div>
-                                </div>
-                                {settings.defaultPrinterName === p.name && (
-                                    <div className="absolute bottom-0 right-0 p-1">
-                                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                    </div>
-                                )}
-                            </button>
-                        ))}
-                    </div>
+                                    {settings.defaultPrinterName === name && (
+                                        <div className="absolute bottom-0 right-0 p-1">
+                                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                        </div>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex items-start gap-3 text-zinc-400 text-xs p-4 bg-black/40 rounded-2xl border border-zinc-800">
+                            <ServerOff className="w-4 h-4 text-zinc-500 shrink-0 mt-0.5"/>
+                            <span>{detectError || 'Không phát hiện được máy in.'} Nhập tên thủ công bên dưới, hoặc bấm "Đồng bộ máy in" để thử lại (cần server.js chạy trên Windows).</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* MANUAL ENTRY */}
@@ -146,17 +181,17 @@ const PrinterSettings: React.FC<PrinterSettingsProps> = ({ settings, updateSetti
                     </div>
                 </div>
 
-                {/* ID CARD PRINT MODE */}
+                {/* PRINT MODE (applies to both document + ID card printing) */}
                 <div className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800 space-y-4">
                     <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-                        <Printer className="w-4 h-4"/> Chế độ in Thẻ Căn Cước
+                        <Printer className="w-4 h-4"/> Chế độ in (Tài liệu &amp; Thẻ Căn Cước)
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <button
                             type="button"
-                            onClick={() => updateSettings({ idCardPrintMode: 'dialog' })}
+                            onClick={() => updateSettings({ printMode: 'dialog' })}
                             className={`p-4 rounded-2xl border text-left transition-all ${
-                                settings.idCardPrintMode !== 'silent'
+                                settings.printMode !== 'silent'
                                 ? 'bg-blue-600/10 border-blue-500'
                                 : 'bg-black border-zinc-800 hover:border-zinc-700'
                             }`}
@@ -169,9 +204,9 @@ const PrinterSettings: React.FC<PrinterSettingsProps> = ({ settings, updateSetti
                         </button>
                         <button
                             type="button"
-                            onClick={() => updateSettings({ idCardPrintMode: 'silent' })}
+                            onClick={() => updateSettings({ printMode: 'silent' })}
                             className={`p-4 rounded-2xl border text-left transition-all ${
-                                settings.idCardPrintMode === 'silent'
+                                settings.printMode === 'silent'
                                 ? 'bg-green-600/10 border-green-500'
                                 : 'bg-black border-zinc-800 hover:border-zinc-700'
                             }`}
@@ -180,7 +215,7 @@ const PrinterSettings: React.FC<PrinterSettingsProps> = ({ settings, updateSetti
                                 <Zap className="w-4 h-4 text-green-400"/>
                                 <span className="font-bold text-white text-sm">In thẳng qua Server</span>
                             </div>
-                            <p className="text-zinc-500 text-xs leading-relaxed">Không cần thao tác. Chỉ hoạt động khi <code className="text-zinc-300">server.js</code> chạy trên máy Windows nối trực tiếp máy in <strong>{settings.defaultPrinterName || 'mặc định'}</strong>.</p>
+                            <p className="text-zinc-500 text-xs leading-relaxed">Áp dụng cho cả in tài liệu và in thẻ căn cước. Không cần thao tác. Chỉ hoạt động khi <code className="text-zinc-300">server.js</code> chạy trên máy Windows nối trực tiếp máy in <strong>{settings.defaultPrinterName || 'mặc định'}</strong>.</p>
                         </button>
                     </div>
                 </div>

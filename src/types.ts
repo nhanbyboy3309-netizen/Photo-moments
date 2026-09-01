@@ -127,9 +127,10 @@ export interface SiteSettings {
   printPriceA4: number; // Price per sheet A4 (Default 500)
   printPriceA3: number; // Price per sheet A3 (Default 1500)
   printPriceIdCard: number; // Price for ID Card print (Default 2000)
+  // Applies to both "In Tài Liệu" (documents) and "In Căn Cước" (ID cards).
   // 'dialog': native browser print dialog (works everywhere, needs manual confirm).
-  // 'silent': server.js sends the composed sheet straight to defaultPrinterName via mspaint /pt (Windows only, no dialog).
-  idCardPrintMode: 'dialog' | 'silent';
+  // 'silent': server.js composes the page(s) and sends straight to defaultPrinterName via mspaint /pt (Windows only, no dialog).
+  printMode: 'dialog' | 'silent';
 
   // Navigation Items
   navigationItems: NavItem[];
