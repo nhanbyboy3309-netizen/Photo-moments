@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Printer, Loader2, CreditCard, Play, CheckCircle2, Info, Monitor, Search, Plus, Cpu } from 'lucide-react';
+import { Printer, Loader2, CreditCard, Play, CheckCircle2, Info, Monitor, Plus } from 'lucide-react';
 import { SiteSettings } from '../../../types';
 
 interface PrinterSettingsProps {
@@ -21,16 +21,6 @@ const COMMON_PRINTERS = [
 
 const PrinterSettings: React.FC<PrinterSettingsProps> = ({ settings, updateSettings, onSave, saving }) => {
   const [testLoading, setTestLoading] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
-
-  const handleScanPrinters = () => {
-    setIsScanning(true);
-    // Giả lập quét thiết bị trong 1.5s
-    setTimeout(() => {
-        setIsScanning(false);
-        alert("Hệ thống đã nhận diện Driver in của trình duyệt. Vui lòng chọn máy in từ danh sách gợi ý hoặc nhập tên máy in đã cài đặt trong máy tính của bạn.");
-    }, 1500);
-  };
 
   const handleTestPrint = () => {
     setTestLoading(true);
@@ -98,14 +88,6 @@ const PrinterSettings: React.FC<PrinterSettingsProps> = ({ settings, updateSetti
                     <p className="text-zinc-400 text-sm">Cấu hình máy in đã cài đặt trên máy tính hiện tại.</p>
                 </div>
             </div>
-            <button 
-                onClick={handleScanPrinters}
-                disabled={isScanning}
-                className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 disabled:opacity-50"
-            >
-                {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                Dò tìm máy in mới
-            </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -152,27 +134,15 @@ const PrinterSettings: React.FC<PrinterSettingsProps> = ({ settings, updateSetti
                     <h3 className="text-sm font-bold text-zinc-300 flex items-center gap-2">
                         <Plus className="w-4 h-4"/> Đăng ký máy in khác
                     </h3>
-                    <div className="space-y-4">
-                        <div className="space-y-1">
-                            <label className="text-xs text-zinc-500 uppercase font-bold ml-1">Tên máy in chính xác (Theo Control Panel)</label>
-                            <input 
-                                type="text"
-                                className="w-full bg-black border border-zinc-700 rounded-xl p-3 focus:border-white focus:outline-none transition-colors text-white font-bold"
-                                value={settings.defaultPrinterName}
-                                onChange={(e) => updateSettings({ defaultPrinterName: e.target.value })}
-                                placeholder="Ví dụ: Canon LBP2900 (Copy 1)"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs text-zinc-500 uppercase font-bold ml-1">Địa chỉ IP / Cổng kết nối (Nếu in mạng)</label>
-                            <input 
-                                type="text"
-                                className="w-full bg-black border border-zinc-700 rounded-xl p-3 focus:border-white focus:outline-none transition-colors text-white font-mono"
-                                value={settings.printerIp}
-                                onChange={(e) => updateSettings({ printerIp: e.target.value })}
-                                placeholder="192.168.1.100"
-                            />
-                        </div>
+                    <div className="space-y-1">
+                        <label className="text-xs text-zinc-500 uppercase font-bold ml-1">Tên máy in chính xác (Theo Control Panel)</label>
+                        <input
+                            type="text"
+                            className="w-full bg-black border border-zinc-700 rounded-xl p-3 focus:border-white focus:outline-none transition-colors text-white font-bold"
+                            value={settings.defaultPrinterName}
+                            onChange={(e) => updateSettings({ defaultPrinterName: e.target.value })}
+                            placeholder="Ví dụ: Canon LBP2900 (Copy 1)"
+                        />
                     </div>
                 </div>
 
@@ -218,26 +188,11 @@ const PrinterSettings: React.FC<PrinterSettingsProps> = ({ settings, updateSetti
                     </button>
                 </div>
 
-                <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl space-y-4">
-                    <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-widest flex items-center gap-2">
-                        <Cpu className="w-4 h-4"/> Trạng thái hệ thống
-                    </h3>
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between p-3 bg-black rounded-xl border border-zinc-800">
-                            <span className="text-zinc-500 text-xs">Driver trình duyệt</span>
-                            <span className="text-green-500 text-xs font-bold flex items-center gap-1"><CheckCircle2 className="w-3 h-3"/> Hoạt động</span>
-                        </div>
-                        <div className="flex items-center justify-between p-3 bg-black rounded-xl border border-zinc-800">
-                            <span className="text-zinc-500 text-xs">Hàng đợi in</span>
-                            <span className="text-zinc-400 text-xs font-bold uppercase tracking-tighter">Trống</span>
-                        </div>
-                    </div>
-                    <div className="bg-yellow-500/5 border border-yellow-500/20 p-4 rounded-xl flex gap-3 items-start">
-                        <Info className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
-                        <p className="text-[11px] text-zinc-400 leading-relaxed italic">
-                            Máy in phải được cài đặt chính thức trong Windows/MacOS/Linux để trình duyệt có thể gọi lệnh in.
-                        </p>
-                    </div>
+                <div className="bg-yellow-500/5 border border-yellow-500/20 p-4 rounded-xl flex gap-3 items-start">
+                    <Info className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
+                    <p className="text-[11px] text-zinc-400 leading-relaxed italic">
+                        Máy in phải được cài đặt chính thức trong Windows/MacOS/Linux để trình duyệt có thể gọi lệnh in.
+                    </p>
                 </div>
             </div>
         </div>

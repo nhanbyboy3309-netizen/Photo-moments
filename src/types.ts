@@ -124,7 +124,6 @@ export interface SiteSettings {
 
   // Printer Configuration
   defaultPrinterName: string;
-  printerIp: string;
   printPriceA4: number; // Price per sheet A4 (Default 500)
   printPriceA3: number; // Price per sheet A3 (Default 1500)
   printPriceIdCard: number; // Price for ID Card print (Default 2000)

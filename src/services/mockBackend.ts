@@ -49,7 +49,6 @@ const DEFAULT_SETTINGS: SiteSettings = {
   feature3Title: 'Phục hồi ảnh cũ',
   feature3ImageUrl: '',
   defaultPrinterName: 'Canon LBP 2900',
-  printerIp: '192.168.1.100',
   printPriceA4: 1000,
   printPriceA3: 3000,
   printPriceIdCard: 2000,
