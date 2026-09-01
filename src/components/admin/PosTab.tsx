@@ -321,7 +321,7 @@ const PosTab = memo(() => {
 
   const subTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const changeDue = cashGiven > subTotal ? cashGiven - subTotal : 0;
+  const changeDue = cashGiven - subTotal;
 
   const BANK_ID = settings?.bankBin || "970416"; 
   const ACCOUNT_NO = settings?.bankAccountNo || "41633207";
