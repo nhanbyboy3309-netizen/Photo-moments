@@ -7,7 +7,11 @@ const pdfjs = require('pdfjs-dist');
 const pdfjsLib: any = (pdfjs as any).getDocument ? pdfjs : (pdfjs as any).default;
 
 if (typeof window !== 'undefined' && pdfjsLib && pdfjsLib.GlobalWorkerOptions) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+    // Bundled locally (not a hardcoded CDN version) so it always matches the
+    // installed pdfjs-dist build — a mismatched API/worker version makes
+    // pdf.js fail silently, which was previously making every PDF page
+    // count come back as 1.
+    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
 }
 
 export interface FilePageInfo {
@@ -44,7 +48,10 @@ const analyzeArrayBuffer = async (arrayBuffer: ArrayBuffer, fileName: string): P
             const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
             const pdf = await loadingTask.promise;
             return { fileName, fileType: 'PDF', totalPages: pdf.numPages };
-        } catch (e) { return { fileName, fileType: 'PDF', totalPages: 1 }; }
+        } catch (e) {
+            console.error(`[printService] Không đọc được số trang PDF của "${fileName}", mặc định 1 trang:`, e);
+            return { fileName, fileType: 'PDF', totalPages: 1 };
+        }
     }
     // Simple mock for office files as JSZip might be heavy or complex to fully robustly parse in browser without lib
     // Assuming 1 page for office files if deep parse fails
@@ -57,7 +64,10 @@ export const countFilePagesFromUrl = async (url: string, fileName: string): Prom
         const response = await fetch(url, { mode: 'cors' }); 
         const arrayBuffer = await response.arrayBuffer();
         return analyzeArrayBuffer(arrayBuffer, fileName);
-    } catch (e) { return { fileName, fileType: 'Error', totalPages: 1 }; }
+    } catch (e) {
+        console.error(`[printService] Không tải được tệp "${fileName}" để đếm số trang:`, e);
+        return { fileName, fileType: 'Error', totalPages: 1 };
+    }
 };
 
 export const uploadPrintFile = async (file: File, sessionId: string): Promise<string | null> => {

@@ -431,19 +431,22 @@ const PrintDocument: React.FC = () => {
                                       <input type="email" className="w-full bg-black border border-zinc-800 rounded-2xl p-4 text-white text-sm focus:border-blue-500 outline-none transition-all" placeholder="khachhang@email.com" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} />
                                   </div>
                                   <div className="pt-6 border-t border-zinc-800 space-y-4">
-                                      <div className="flex justify-between items-end">
-                                          <div className="space-y-1">
-                                            <span className="text-zinc-500 font-bold text-[10px] uppercase">Ước tính ({totalPhysicalSheets} tờ)</span>
-                                            <div className="text-3xl font-black text-green-500">{formatCurrency(totalCost)}</div>
+                                      {step === 'upload' ? (
+                                          <div className="flex justify-between items-center">
+                                              <span className="text-zinc-500 text-xs">{files.length} tệp đã sẵn sàng — chọn khổ giấy, mặt in và số bản để xem giá.</span>
+                                              <button onClick={() => setStep('config')} disabled={files.some(f => f.isAnalyzing)} className="bg-white disabled:opacity-50 text-black p-4 rounded-2xl font-bold hover:bg-zinc-200 shadow-lg shrink-0"><ChevronRight className="w-6 h-6"/></button>
                                           </div>
-                                          {step === 'upload' ? (
-                                             <button onClick={() => setStep('config')} className="bg-white text-black p-4 rounded-2xl font-bold hover:bg-zinc-200 shadow-lg"><ChevronRight className="w-6 h-6"/></button>
-                                          ) : (
-                                             <button onClick={handleCreateOrder} disabled={isLoading || files.some(f => f.isAnalyzing)} className="bg-blue-600 disabled:opacity-50 text-white px-8 py-4 rounded-2xl font-bold hover:bg-blue-500 shadow-xl flex items-center gap-2">
+                                      ) : (
+                                          <div className="flex justify-between items-end">
+                                              <div className="space-y-1">
+                                                <span className="text-zinc-500 font-bold text-[10px] uppercase">Ước tính ({totalPhysicalSheets} tờ)</span>
+                                                <div className="text-3xl font-black text-green-500">{formatCurrency(totalCost)}</div>
+                                              </div>
+                                              <button onClick={handleCreateOrder} disabled={isLoading || files.some(f => f.isAnalyzing)} className="bg-blue-600 disabled:opacity-50 text-white px-8 py-4 rounded-2xl font-bold hover:bg-blue-500 shadow-xl flex items-center gap-2">
                                                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin"/> : <><CreditCard className="w-5 h-5"/> Thanh toán</>}
-                                             </button>
-                                          )}
-                                      </div>
+                                              </button>
+                                          </div>
+                                      )}
                                   </div>
                               </div>
                           )}
