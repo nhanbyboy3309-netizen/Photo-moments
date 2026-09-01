@@ -231,8 +231,18 @@ const PrintIdCardModule: React.FC<PrintIdCardModuleProps> = ({ price, printerNam
                           )}
                       </div>
 
+                      <div className="pt-4 border-t border-zinc-800 space-y-2">
+                          <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Số lượng bản in</label>
+                          <div className="flex items-center gap-4 bg-black rounded-xl p-2 border border-zinc-800 w-fit">
+                              <button onClick={() => setCopies(Math.max(1, copies - 1))} className="p-2 hover:bg-zinc-800 rounded-lg text-white"><Minus className="w-4 h-4"/></button>
+                              <span className="text-xl font-black text-white w-8 text-center">{copies}</span>
+                              <button onClick={() => setCopies(copies + 1)} className="p-2 hover:bg-zinc-800 rounded-lg text-white"><Plus className="w-4 h-4"/></button>
+                          </div>
+                          <p className="text-zinc-400 text-xs">Thành tiền: <span className="font-bold text-white">{formatCurrency(price * copies)}</span></p>
+                      </div>
+
                       <div className="pt-4 border-t border-zinc-800">
-                          <button 
+                          <button
                             disabled={!frontImage || !backImage}
                             onClick={() => { setStep('crop'); setCropSrc(frontImage); setCroppingSide('front'); }}
                             className="w-full bg-white disabled:opacity-20 text-black py-4 rounded-2xl font-black uppercase text-sm tracking-widest hover:bg-zinc-200 transition-colors shadow-lg flex items-center justify-center gap-2"
@@ -346,11 +356,9 @@ const PrintIdCardModule: React.FC<PrintIdCardModuleProps> = ({ price, printerNam
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-xs text-zinc-500 font-bold uppercase">Số lượng bản in</label>
-                                <div className="flex items-center gap-4 bg-black rounded-xl p-2 border border-zinc-800 w-fit">
-                                    <button onClick={() => setCopies(Math.max(1, copies - 1))} className="p-2 hover:bg-zinc-800 rounded-lg text-white"><Minus className="w-4 h-4"/></button>
-                                    <span className="text-xl font-black text-white w-8 text-center">{copies}</span>
-                                    <button onClick={() => setCopies(copies + 1)} className="p-2 hover:bg-zinc-800 rounded-lg text-white"><Plus className="w-4 h-4"/></button>
+                                <label className="text-xs text-zinc-500 font-bold uppercase">Số lượng bản in (đã thanh toán)</label>
+                                <div className="flex items-center gap-4 bg-black rounded-xl p-2 border border-zinc-800 w-fit opacity-80">
+                                    <span className="text-xl font-black text-white w-8 text-center px-2">{copies}</span>
                                 </div>
                             </div>
                         </div>
