@@ -283,10 +283,11 @@ const PrintDocument: React.FC = () => {
         </div>
 
         {activeMode === 'idcard' ? (
-          <PrintIdCardModule 
-            price={settings?.printPriceIdCard || 2000} 
-            printerName={settings?.defaultPrinterName || 'Máy in mặc định'} 
+          <PrintIdCardModule
+            price={settings?.printPriceIdCard || 2000}
+            printerName={settings?.defaultPrinterName || 'Máy in mặc định'}
             logoUrl={settings?.logoImageUrl}
+            printMode={settings?.idCardPrintMode || 'dialog'}
           />
         ) : (
           <div className="grid lg:grid-cols-3 gap-8 animate-fade-in">

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Printer, Loader2, CreditCard, Play, CheckCircle2, Info, Monitor, Plus } from 'lucide-react';
+import { Printer, Loader2, CreditCard, Play, CheckCircle2, Info, Monitor, Plus, MousePointerClick, Zap } from 'lucide-react';
 import { SiteSettings } from '../../../types';
 
 interface PrinterSettingsProps {
@@ -143,6 +143,45 @@ const PrinterSettings: React.FC<PrinterSettingsProps> = ({ settings, updateSetti
                             onChange={(e) => updateSettings({ defaultPrinterName: e.target.value })}
                             placeholder="Ví dụ: Canon LBP2900 (Copy 1)"
                         />
+                    </div>
+                </div>
+
+                {/* ID CARD PRINT MODE */}
+                <div className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800 space-y-4">
+                    <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                        <Printer className="w-4 h-4"/> Chế độ in Thẻ Căn Cước
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <button
+                            type="button"
+                            onClick={() => updateSettings({ idCardPrintMode: 'dialog' })}
+                            className={`p-4 rounded-2xl border text-left transition-all ${
+                                settings.idCardPrintMode !== 'silent'
+                                ? 'bg-blue-600/10 border-blue-500'
+                                : 'bg-black border-zinc-800 hover:border-zinc-700'
+                            }`}
+                        >
+                            <div className="flex items-center gap-2 mb-1">
+                                <MousePointerClick className="w-4 h-4 text-blue-400"/>
+                                <span className="font-bold text-white text-sm">Hộp thoại trình duyệt</span>
+                            </div>
+                            <p className="text-zinc-500 text-xs leading-relaxed">Mặc định. Hoạt động trên mọi hệ điều hành, nhân viên bấm "In" trong hộp thoại hiện ra.</p>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => updateSettings({ idCardPrintMode: 'silent' })}
+                            className={`p-4 rounded-2xl border text-left transition-all ${
+                                settings.idCardPrintMode === 'silent'
+                                ? 'bg-green-600/10 border-green-500'
+                                : 'bg-black border-zinc-800 hover:border-zinc-700'
+                            }`}
+                        >
+                            <div className="flex items-center gap-2 mb-1">
+                                <Zap className="w-4 h-4 text-green-400"/>
+                                <span className="font-bold text-white text-sm">In thẳng qua Server</span>
+                            </div>
+                            <p className="text-zinc-500 text-xs leading-relaxed">Không cần thao tác. Chỉ hoạt động khi <code className="text-zinc-300">server.js</code> chạy trên máy Windows nối trực tiếp máy in <strong>{settings.defaultPrinterName || 'mặc định'}</strong>.</p>
+                        </button>
                     </div>
                 </div>
 
