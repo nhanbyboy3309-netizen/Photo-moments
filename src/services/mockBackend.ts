@@ -1,5 +1,5 @@
 
-import { Photo, SiteSettings, Partner, Product, Order, InventoryLog, Stamp, NavItem } from '../types';
+import { Photo, SiteSettings, Partner, Product, Order, CartItem, InventoryLog, Stamp, NavItem } from '../types';
 
 // ⚠️ REPLACE THIS WITH YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL ⚠️
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxhpSv6qg4xyaQ6kh6yPa20x9pe2ldDBBM8euSJhxU_y9x70Ud1C2-CTdl57vUNKEhd/exec";
@@ -454,19 +454,28 @@ export const logInventoryChange = async (productId: string, productName: string,
   await apiCall('log_inventory', { log });
 };
 
-export const updateProductStock = async (id: string, quantity: number, mode: 'add' | 'set' | 'subtract' = 'set', note: string = "Stock Update"): Promise<void> => {
+// Deduct stock for every non-service item in an order with ONE product fetch instead of
+// one per line item (each of which used to also re-fetch inside saveProduct's existence
+// check). This is what keeps POS checkout fast when the cart has several items.
+const deductStockForItems = async (items: CartItem[], note: string): Promise<void> => {
+  const relevantItems = items.filter(item => item.type !== 'service');
+  if (relevantItems.length === 0) return;
+
   const products = await getProducts();
-  const product = products.find(p => p.id === id);
-  if (product && product.type !== 'service') {
-    let newStock = product.stock;
-    if (mode === 'add') newStock += quantity;
-    else if (mode === 'subtract') newStock = Math.max(0, product.stock - quantity);
-    else newStock = quantity;
-    
+  const logs: Promise<void>[] = [];
+
+  for (const item of relevantItems) {
+    const product = products.find(p => p.id === item.id);
+    if (!product) continue;
+    const newStock = Math.max(0, product.stock - item.quantity);
     const change = newStock - product.stock;
-    await saveProduct({ ...product, stock: newStock });
-    if (change !== 0) await logInventoryChange(id, product.name, change, newStock, change > 0 ? 'import' : 'export', note);
+    await apiCall('update_product', { id: product.id, updates: { stock: newStock } });
+    if (change !== 0) {
+      logs.push(logInventoryChange(product.id, product.name, change, newStock, 'export', note));
+    }
   }
+
+  await Promise.all(logs);
 };
 
 export const getOrders = async (): Promise<Order[]> => {
@@ -483,13 +492,9 @@ export const createOrder = async (order: Order, isPos: boolean = false): Promise
   // PASS CURRENT APP URL for email links
   const appUrl = window.location.origin + window.location.pathname;
   await apiCall('create_order', { order, appUrl });
-  
+
   if (isPos || order.status === 'paid') {
-    for (const item of order.items) {
-      if (item.type !== 'service') {
-        await updateProductStock(item.id, item.quantity, 'subtract', `Order/POS #${order.id}`);
-      }
-    }
+    await deductStockForItems(order.items, `Order/POS #${order.id}`);
   }
 };
 
@@ -497,12 +502,8 @@ export const updateOrderStatus = async (orderId: string, status: 'paid' | 'pendi
   await apiCall('update_order', { id: orderId, updates: { status } });
   const order = await getOrderById(orderId);
   if (status === 'paid' && order) {
-     if (order.paymentMethod === 'transfer') { 
-         for (const item of order.items) {
-             if (item.type !== 'service') {
-                await updateProductStock(item.id, item.quantity, 'subtract', `Order Update #${orderId}`);
-             }
-         }
+     if (order.paymentMethod === 'transfer') {
+         await deductStockForItems(order.items, `Order Update #${orderId}`);
      }
   }
 };
